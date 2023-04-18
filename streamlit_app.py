@@ -13,14 +13,19 @@ def get_fruityvice_data(this_fruit_choice):
 
 #Snowflake-related functions
 def get_fruit_load_list():
+  my_cnx = snowflake.connector.connect(**streamlit.secrets["snowflake"])
   #Snowflake Query
   with my_cnx.cursor() as my_cur:
     my_cur.execute("SELECT * FROM FRUIT_LOAD_LIST")
-    return my_cur.fetchall()
+    fruit_list = my_cur.fetchall()
+    my_cnx.close()
+    return fruit_list
 
 def insert_row_snowflake(new_fruit):
+  my_cnx = snowflake.connector.connect(**streamlit.secrets["snowflake"])
   with my_cnx.cursor() as my_cur:
     my_cur.execute("INSERT INTO FRUIT_LOAD_LIST VALUES ('" + new_fruit + "')")
+    my_cnx.close()
     return "Thanks for adding " + new_fruit
 
 my_fruit_list = pd.read_csv("https://uni-lab-files.s3.us-west-2.amazonaws.com/dabw/fruit_macros.txt")
@@ -58,11 +63,10 @@ except URLError as e:
 
 #my_cur.execute("SELECT CURRENT_USER(), CURRENT_ACCOUNT(), CURRENT_REGION()")
 
-streamlit.header("The fruit load list contains:")
+streamlit.header("View Our Fruit List - Add Your Favorites!")
 
 #Button to load the fruit
-if streamlit.button('Get Fruit Load List'):
-  my_cnx = snowflake.connector.connect(**streamlit.secrets["snowflake"])
+if streamlit.button('Get Fruit List'):
   my_data_rows = get_fruit_load_list()
   streamlit.dataframe(my_data_rows)
 
@@ -71,6 +75,5 @@ if streamlit.button('Get Fruit Load List'):
 # Allow the end user to add a fruit to the list
 add_my_fruit = streamlit.text_input('What fruit would you like to add?')
 if streamlit.button('Add a Fruit to the List'):
-  my_cnx = snowflake.connector.connect(**streamlit.secrets["snowflake"])
   back_from_function = insert_row_snowflake(add_my_fruit)
   streamlit.text(back_from_function)
